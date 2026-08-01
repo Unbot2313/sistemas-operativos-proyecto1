@@ -10,6 +10,12 @@ main(int argc, char *argv[])
     // arvg 1 es el nombre del archivo a leer
     int fd = open(argv[1], O_RDONLY);
 
+    // devuelve -1 si ocurre un error como no encontrar el archivo
+    if (fd < 0) {
+        printf("Error al abrir el archivo %s\n", argv[1]);
+        exit(1);
+    }
+
     char buf[512];
     int read_valor;
 
