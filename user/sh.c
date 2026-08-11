@@ -71,6 +71,9 @@ main(void)
     argv[argc] = 0;
 
     if (argc > 0) {
+      if (strcmp(argv[0], "exit") == 0) {
+        exit(0);   // termina el shell
+      }
       RunCommand(argv[0], argv); // ejecuta el comando
     }
 
