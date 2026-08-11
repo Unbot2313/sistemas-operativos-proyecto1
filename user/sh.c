@@ -36,20 +36,35 @@ main(void)
       break;  // si no hay nada (EOF), termina
     }              
 
+    printf("Bytes: %d\n", strlen(buf));
+
+    char *hardcoded = "cat ls";
+    printf("Bytes de texto quemado: %d\n", strlen(hardcoded));
+
+    char *hardcoded2 = "\n";
+    printf("Bytes de texto quemado: %d\n", strlen(hardcoded2));
+
     int argc = 0;
+    // Parse the input line into arguments
     char *argv[16];
     char *p = buf;
 
+    // for(int i = 0; i < 16; i++) {
+    //   argv[i] = 0;
+    // }
+
     while (*p) {
-      while (*p == ' ' || *p == '\t') {
+      while (*p == ' ' || *p == '\t' || *p == '\n') {
         *p++ = 0;
       }
+      if (*p == '\n') // is a blank command
+        continue;
       if (*p == 0)
         break;
       if (argc < 15) {
         argv[argc++] = p;
       }
-      while (*p && *p != ' ' && *p != '\t') {
+      while (*p && *p != ' ' && *p != '\t' && *p != '\n') {
         p++;
       }
     }
