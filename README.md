@@ -4,7 +4,7 @@
 ### Integrantes
  
 - Tomas Ramirez Galeano
-
+- Alejandro Restrepo Osorio
 ### Curso
  
 Sistemas Operativos
