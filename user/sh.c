@@ -1,8 +1,9 @@
 #include "kernel/types.h"
+#include "kernel/fcntl.h"
 #include "user/user.h"
 
 int
-RunCommand(char *cmd, char **argv)
+RunCommand(char *cmd, char **argv, char *input_file, char *output_file)
 {
   int pid = fork();
 
@@ -12,12 +13,34 @@ RunCommand(char *cmd, char **argv)
   } 
 
   if (pid == 0) {
-    // Proceso hijo
+    int fd;
+
+    if (input_file != 0) {
+      fd = open(input_file, O_RDONLY);
+      if (fd < 0) {
+        printf("Error al abrir la entrada %s\n", input_file);
+        exit(1);
+      }
+      close(0);
+      dup(fd);
+      close(fd);
+    }
+
+    if (output_file != 0) {
+      fd = open(output_file, O_WRONLY | O_CREATE | O_TRUNC);
+      if (fd < 0) {
+        printf("Error al abrir la salida %s\n", output_file);
+        exit(1);
+      }
+      close(1);
+      dup(fd);
+      close(fd);
+    }
+
     exec(cmd, argv);
     printf("Error al ejecutar el comando\n");
     exit(-1);
   } else {
-    // Proceso padre
     wait(0); // Espera a que el proceso hijo termine
   }
 
@@ -36,36 +59,47 @@ main(void)
       break;  // si no hay nada (EOF), termina
     }              
 
-    printf("Bytes: %d\n", strlen(buf));
-
-    char *hardcoded = "cat ls";
-    printf("Bytes de texto quemado: %d\n", strlen(hardcoded));
-
-    char *hardcoded2 = "\n";
-    printf("Bytes de texto quemado: %d\n", strlen(hardcoded2));
-
     int argc = 0;
-    // Parse the input line into arguments
     char *argv[16];
+    char *input_file = 0;
+    char *output_file = 0;
     char *p = buf;
-
-    // for(int i = 0; i < 16; i++) {
-    //   argv[i] = 0;
-    // }
 
     while (*p) {
       while (*p == ' ' || *p == '\t' || *p == '\n') {
         *p++ = 0;
       }
-      if (*p == '\n') // is a blank command
-        continue;
       if (*p == 0)
         break;
+
+      char *token = p;
       if (argc < 15) {
-        argv[argc++] = p;
+        argv[argc++] = token;
       }
       while (*p && *p != ' ' && *p != '\t' && *p != '\n') {
         p++;
+      }
+
+      if (*p != 0)
+        *p++ = 0;
+
+      if (strcmp(token, "<") == 0 || strcmp(token, ">") == 0) {
+        char **file = strcmp(token, "<") == 0 ? &input_file : &output_file;
+
+        while (*p == ' ' || *p == '\t' || *p == '\n')
+          *p++ = 0;
+        if (*p == 0) {
+          printf("Falta el archivo despues de %s\n", token);
+          argc = 0;
+          break;
+        }
+
+        *file = p;
+        while (*p && *p != ' ' && *p != '\t' && *p != '\n')
+          p++;
+        if (*p != 0)
+          *p++ = 0;
+        argc--;
       }
     }
     argv[argc] = 0;
@@ -74,7 +108,7 @@ main(void)
       if (strcmp(argv[0], "exit") == 0) {
         exit(0);   // termina el shell
       }
-      RunCommand(argv[0], argv); // ejecuta el comando
+      RunCommand(argv[0], argv, input_file, output_file);
     }
 
   }
